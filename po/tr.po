@@ -1,0 +1,283 @@
+# translation of simple-ccsm.po to
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Serdar Soytetir <tulliana@gmail.com>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: simple-ccsm\n"
+"Report-Msgid-Bugs-To: http://bugs.opencompositing.org\n"
+"POT-Creation-Date: 2009-03-24 08:14+0100\n"
+"PO-Revision-Date: 2009-05-17 02:32+0200\n"
+"Last-Translator: Levent Mukan <lmukan@gmail.com>\n"
+"Language-Team: <yerellestirme@kde.org.tr>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Pootle 1.1.0\n"
+
+msgid "Minimal"
+msgstr ""
+
+msgid "Medium"
+msgstr ""
+
+msgid "Advanced"
+msgstr ""
+
+msgid "Ultimate"
+msgstr ""
+
+msgid "Provides a simple desktop environment with very few effects."
+msgstr ""
+
+msgid ""
+"Provides good balance between attractiveness and moderate performence "
+"requirements."
+msgstr ""
+
+msgid "Provides more aesthetically pleasing set of effects."
+msgstr ""
+
+msgid ""
+"Provides very advanced and eye-catching set of effects. Requires faster "
+"graphics card."
+msgstr ""
+
+#, fuzzy
+msgid "Enabled"
+msgstr "Renk Filtresini Etkinleştir"
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Zoom"
+msgstr ""
+
+#, fuzzy
+msgid "Colorfilter"
+msgstr "Renk Filtresini Yapılandır"
+
+msgid "None"
+msgstr "Hiçbiri"
+
+#, c-format
+msgid "%s (Cover)"
+msgstr ""
+
+#, c-format
+msgid "%s (Flip)"
+msgstr ""
+
+msgid "Cover"
+msgstr ""
+
+msgid "Flip"
+msgstr "Çevir"
+
+msgid ""
+"Desktop effects are not supported on your current hardware / configuration. "
+"Would you like to cancel enabling of desktop effects or run them anyway?"
+msgstr ""
+
+msgid "Default"
+msgstr "Varsayılan"
+
+#, fuzzy
+msgid "<b>Accessibility</b>"
+msgstr "<b>Erişebilirlik:</b>"
+
+#, fuzzy
+msgid "<b>Additions</b>"
+msgstr "<b>Canlandırmalar:</b>"
+
+#, fuzzy
+msgid "<b>Animations</b>"
+msgstr "<b>Canlandırmalar:</b>"
+
+#, fuzzy
+msgid "<b>Appearance</b>"
+msgstr "<b>Görünüm</b>"
+
+msgid "<b>Area zoom</b>"
+msgstr ""
+
+msgid "<b>Close Window</b>"
+msgstr "<b>Pencereyi Kapat</b>"
+
+msgid "<b>Cube Effects</b>"
+msgstr "<b>Küp Efektleri</b>"
+
+#, fuzzy
+msgid "<b>Description</b>"
+msgstr "<b>Masaüstü:</b>"
+
+#, fuzzy
+msgid "<b>Desktop columns</b>"
+msgstr "<b>Masaüstü:</b>"
+
+#, fuzzy
+msgid "<b>Desktop preview</b>"
+msgstr "Masaüstü Önizlemesi"
+
+#, fuzzy
+msgid "<b>Desktop rows</b>"
+msgstr "<b>Masaüstü:</b>"
+
+#, fuzzy
+msgid "<b>Desktop</b>"
+msgstr "<b>Masaüstü:</b>"
+
+#, fuzzy
+msgid "<b>Effects</b>"
+msgstr "<b>Efektler:</b>"
+
+#, fuzzy
+msgid "<b>Enable zoom</b>"
+msgstr "Renk Filtresini Etkinleştir"
+
+msgid "<b>Focus window</b>"
+msgstr ""
+
+#, fuzzy
+msgid "<b>Minimize window</b>"
+msgstr "<b>Canlandırmalar:</b>"
+
+msgid "<b>Open window</b>"
+msgstr ""
+
+msgid "<b>Screen Edges</b>"
+msgstr ""
+
+msgid "<b>Screen zoom</b>"
+msgstr ""
+
+msgid "<b>Switcher</b>"
+msgstr ""
+
+#, fuzzy
+msgid "Accessibility"
+msgstr "Erişebilirlik"
+
+msgid "Animations"
+msgstr "Canlandırmalar"
+
+msgid "Area zoom"
+msgstr ""
+
+msgid "Deformation:"
+msgstr ""
+
+msgid "Desktop"
+msgstr "Masaüstü"
+
+msgid "Edges"
+msgstr "Kenarlar"
+
+#, fuzzy
+msgid "Effects"
+msgstr "<b>Efektler:</b>"
+
+msgid "Enable 3D Windows"
+msgstr ""
+
+#, fuzzy
+msgid "Enable Blur"
+msgstr "Renk Filtresini Etkinleştir"
+
+#, fuzzy
+msgid "Enable Expo"
+msgstr "Renk Filtresini Etkinleştir"
+
+#, fuzzy
+msgid "Enable Reflection"
+msgstr "Büyütmeyi Etkinleştir"
+
+msgid "Enable Scale"
+msgstr ""
+
+msgid "Enable Wobbly"
+msgstr ""
+
+#, fuzzy
+msgid "Enable animations"
+msgstr "Canlandırmaları Etkinleştir"
+
+#, fuzzy
+msgid "Enable extra animations"
+msgstr "Canlandırmaları Etkinleştir"
+
+msgid "Info"
+msgstr ""
+
+msgid "Opacity:"
+msgstr ""
+
+#, fuzzy
+msgid "Profile:"
+msgstr "Profil"
+
+msgid "Screen zoom"
+msgstr ""
+
+#, fuzzy
+msgid "Simple CompizConfig Settings Manager"
+msgstr "Basit Compiz Yapılandırma Ayarları Yöneticisi"
+
+#, fuzzy
+msgid "_Enable desktop effects"
+msgstr "Büyütmeyi Etkinleştir"
+
+msgid "Configure Compiz with CompizConfig"
+msgstr ""
+
+#~ msgid "Close Animation"
+#~ msgstr "Canlandırmayı Kapat"
+
+#~ msgid "Minimize Animation"
+#~ msgstr "Küçültme Canlandırması"
+
+#~ msgid "Number of Horizontal Dekstops"
+#~ msgstr "Yatay Masaüstlerinin Sayısı"
+
+#~ msgid "Number of Vertical Dekstops"
+#~ msgstr "Dikey Masaüstlerinin Sayısı"
+
+#~ msgid "Open Animation"
+#~ msgstr "Açma Canlandırması"
+
+#~ msgid "Profile"
+#~ msgstr "Profil"
+
+#, fuzzy
+#~ msgid "gtk-close"
+#~ msgstr "gtk-ok"
+
+#~ msgid "<b><span size='large'>Filter Manager was not found.</span></b>"
+#~ msgstr "<b><span size='large'>Filtre Yöneticisi bulunamadı.</span></b>"
+
+#~ msgid ""
+#~ "Configurate accessibility settings for visually impaired people by "
+#~ "activating this helper plugins."
+#~ msgstr ""
+#~ "Bu yardımcı eklentileri etkinleştirerek görme bozukluğu olan insanlar "
+#~ "için erişebilirlik ayarlarını yapılandırın."
+
+#~ msgid ""
+#~ "Please check if you have the filter-manager package installed correctly."
+#~ msgstr ""
+#~ "Lütfen filtre yöneticisi paketinin doğru şekilde yüklendiğinden emin olun."
+
+#~ msgid ""
+#~ "Select the desktop plugin in the drop down box and change the size of the "
+#~ "desktop."
+#~ msgstr ""
+#~ "Açılabilir kutudan masaüstü eklentisini seçin ve masaüstü boyutunu "
+#~ "değiştirin."
+
+#~ msgid ""
+#~ "Select the window animations which should be used for the specific events "
+#~ "in the drop down boxes."
+#~ msgstr ""
+#~ "Belirli olaylar için açılabilir kutudan pencere canlandırmalarını seçin."

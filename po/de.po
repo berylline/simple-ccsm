@@ -1,0 +1,280 @@
+# Simple CompizConfig German translation.
+# Copyright (C) 2007 Patrick Niklaus
+# This file is distributed under the same license as the simple-ccsm package.
+# Patrick Niklaus <marex@opencompositing.org>, 2007.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: simple-ccsm 0.0.1\n"
+"Report-Msgid-Bugs-To: http://bugs.opencompositing.org\n"
+"POT-Creation-Date: 2009-03-24 08:14+0100\n"
+"PO-Revision-Date: 2009-10-13 18:16+0200\n"
+"Last-Translator: sven knoblach <s.knoblach@web.de>\n"
+"Language-Team: Compiz Fusion translators <i18n@lists.compiz-fusion.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Pootle 1.1.0\n"
+
+# FIXME
+msgid "Minimal"
+msgstr "Minimal"
+
+# FIXME
+msgid "Medium"
+msgstr "Mittel"
+
+# FIXME
+msgid "Advanced"
+msgstr "Erweitert"
+
+# FIXME
+msgid "Ultimate"
+msgstr "Ultimativ"
+
+msgid "Provides a simple desktop environment with very few effects."
+msgstr "Bietet eine schlichte Desktop-Umgebung mit wenigen visuellen Effekten."
+
+msgid ""
+"Provides good balance between attractiveness and moderate performence "
+"requirements."
+msgstr ""
+"Bietet dezente Effekte mit gemäßigten Anforderungen an die Rechnerleistung."
+
+msgid "Provides more aesthetically pleasing set of effects."
+msgstr "Bietet eine größere Auswahl grafischer Effekte."
+
+msgid ""
+"Provides very advanced and eye-catching set of effects. Requires faster "
+"graphics card."
+msgstr ""
+"Bietet eine große Auswahl aufwendiger grafischer Effekte. Eine schnellere "
+"Grafikkarte wird benötigt."
+
+msgid "Enabled"
+msgstr "Aktiviert"
+
+msgid "Disabled"
+msgstr "Deaktiviert"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Colorfilter"
+msgstr "Farbfilter"
+
+msgid "None"
+msgstr "Keine"
+
+#, c-format
+msgid "%s (Cover)"
+msgstr "%s (Cover)"
+
+#, c-format
+msgid "%s (Flip)"
+msgstr "%s (Flip)"
+
+msgid "Cover"
+msgstr "Cover"
+
+msgid "Flip"
+msgstr "Flip"
+
+msgid ""
+"Desktop effects are not supported on your current hardware / configuration. "
+"Would you like to cancel enabling of desktop effects or run them anyway?"
+msgstr ""
+"Desktop Effekte werden von der momentanen Hardware / Einstellung nicht "
+"unterstützt. Möchten Sie die Aktivierung der Desktop Effekte abbrechen, oder "
+"trotzdem ausführen?"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "<b>Accessibility</b>"
+msgstr "<b>Barrierefreiheit</b>"
+
+# FIXME
+msgid "<b>Additions</b>"
+msgstr "<b>Ergänzungen</b>"
+
+msgid "<b>Animations</b>"
+msgstr "<b>Animationen</b>"
+
+msgid "<b>Appearance</b>"
+msgstr "<b>Aussehen</b>"
+
+# FIXME
+msgid "<b>Area zoom</b>"
+msgstr "<b>Bereichszoom</b>"
+
+msgid "<b>Close Window</b>"
+msgstr "<b>Fenster schließen</b>"
+
+msgid "<b>Cube Effects</b>"
+msgstr "<b>Desktop-Würfel Effekte</b>"
+
+msgid "<b>Description</b>"
+msgstr "<b>Beschreibung</b>"
+
+# FIXME
+msgid "<b>Desktop columns</b>"
+msgstr "<b>Arbeitsflächen Spalten</b>"
+
+msgid "<b>Desktop preview</b>"
+msgstr "<b>Arbeitsflächen Vorschau</b>"
+
+# FIXME
+msgid "<b>Desktop rows</b>"
+msgstr "<b>Arbeitsflächen Zeilen</b>"
+
+msgid "<b>Desktop</b>"
+msgstr "<b>Arbeitsfläche</b>"
+
+msgid "<b>Effects</b>"
+msgstr "<b>Effekte</b>"
+
+msgid "<b>Enable zoom</b>"
+msgstr "<b>Zoom aktivieren</b>"
+
+msgid "<b>Focus window</b>"
+msgstr "<b>Fenster fokussieren</b>"
+
+msgid "<b>Minimize window</b>"
+msgstr "<b>Fenster minimieren</b>"
+
+msgid "<b>Open window</b>"
+msgstr "<b>Fenster öffnen</b>"
+
+msgid "<b>Screen Edges</b>"
+msgstr "<b>Bildschirmecken</b>"
+
+msgid "<b>Screen zoom</b>"
+msgstr "<b>Bildschirmzoom</b>"
+
+msgid "<b>Switcher</b>"
+msgstr "<b>Anwendungsumschalter</b>"
+
+msgid "Accessibility"
+msgstr "Barrierefreiheit"
+
+msgid "Animations"
+msgstr "Animationen"
+
+msgid "Area zoom"
+msgstr "Bereichszoom"
+
+msgid "Deformation:"
+msgstr "Deformation"
+
+msgid "Desktop"
+msgstr "Arbeitsfläche"
+
+msgid "Edges"
+msgstr "Ecken"
+
+msgid "Effects"
+msgstr "Effekte"
+
+msgid "Enable 3D Windows"
+msgstr "3D Fenster aktivieren"
+
+msgid "Enable Blur"
+msgstr "Unschärfe aktivieren"
+
+msgid "Enable Expo"
+msgstr "Expo aktivieren"
+
+msgid "Enable Reflection"
+msgstr "Reflektion aktivieren"
+
+msgid "Enable Scale"
+msgstr "Skalieren aktivieren"
+
+msgid "Enable Wobbly"
+msgstr "Wobbly aktivieren"
+
+msgid "Enable animations"
+msgstr "Animationen aktivieren"
+
+msgid "Enable extra animations"
+msgstr "Zusätzliche Animationen aktivieren"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Opacity:"
+msgstr "Sichtbarkeit"
+
+msgid "Profile:"
+msgstr "Profil:"
+
+msgid "Screen zoom"
+msgstr "Bildschirmzoom"
+
+msgid "Simple CompizConfig Settings Manager"
+msgstr "Einfacher CompizConfig Einstellungs-Manager"
+
+msgid "_Enable desktop effects"
+msgstr "Arbeitsflächeneffekte aktivieren"
+
+msgid "Configure Compiz with CompizConfig"
+msgstr "Konfiguriere Compiz mit CompizConfig"
+
+#~ msgid "Profile"
+#~ msgstr "Profil"
+
+# FIXME
+#~ msgid "<b>Zoom out</b>"
+#~ msgstr "<b>Heraus zoomen</b>"
+
+#~ msgid "gtk-close"
+#~ msgstr "gtk-close"
+
+#~ msgid "gtk-help"
+#~ msgstr "gtk-help"
+
+#~ msgid "Close Animation"
+#~ msgstr "Beenden Animation"
+
+#~ msgid "Minimize Animation"
+#~ msgstr "Minimieren Animation"
+
+#~ msgid "Number of Horizontal Dekstops"
+#~ msgstr "Anzahl der horizontalen Arbeitsflächen"
+
+#~ msgid "Number of Vertical Dekstops"
+#~ msgstr "Anzahl der vertikalen Arbeitsflächen"
+
+#~ msgid "Open Animation"
+#~ msgstr "Öffnen Animation"
+
+#~ msgid "<b><span size='large'>Filter Manager was not found.</span></b>"
+#~ msgstr ""
+#~ "<b><span size='large'>Filter Manager wurde nicht gefunden.</span></b>"
+
+#~ msgid ""
+#~ "Configurate accessibility settings for visually impaired people by "
+#~ "activating this helper plugins."
+#~ msgstr ""
+#~ "Verändern sie die Einstellungen für sehbehinderte Menschen, indem sie "
+#~ "eines dieser Plugins aktivieren."
+
+#~ msgid ""
+#~ "Please check if you have the filter-manager package installed correctly."
+#~ msgstr ""
+#~ "Bitte überprüfen sie, ob sie den Filter Manager korrekt installiert haben."
+
+#~ msgid ""
+#~ "Select the desktop plugin in the drop down box and change the size of the "
+#~ "desktop."
+#~ msgstr ""
+#~ "Wählen sie eines der Arbeitsflächen Plugins aus und verändern sie die "
+#~ "Größe der Arbeitsfläche"
+
+#~ msgid ""
+#~ "Select the window animations which should be used for the specific events "
+#~ "in the drop down boxes."
+#~ msgstr ""
+#~ "Wählen sie die Fenster Animationen aus, die bei den gegebenen Ereignissen "
+#~ "ausgeführt werden sollen."

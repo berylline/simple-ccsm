@@ -1,0 +1,1428 @@
+#!/usr/bin/env python
+# -*-  coding: UTF-8 -*-
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# Authors: Patrick Niklaus (marex@opencompositing.org)
+# Copyright (C) 2007 Patrick Niklaus
+
+import shutil
+import os
+import subprocess
+import pygtk
+import gtk
+import gobject
+import gtk.gdk as gdk
+import gtk.glade as glade
+import cairo
+import compizconfig as ccs
+import ccm
+import locale
+import gettext
+import time
+from optparse import OptionParser
+from threading import Thread
+locale.setlocale(locale.LC_ALL, "")
+_ = gettext.gettext
+
+Tooltips = gtk.Tooltips()
+
+DataDir = '/usr/local/share/simple-ccsm/'
+
+# Switcher keybinding
+SwitcherKey = "<Alt>Tab"
+ReverseSwitcherKey = "<Shift><Alt>Tab"
+
+# Since there seems no way to get the untranslated names,
+# we need to keep a list here.
+CloseOpenEffectNames = {\
+'animation:None':'None',
+'animation:Random':'Random',
+'animation:Curved Fold':'Curved Fold',
+'animation:Dream':'Dream',
+'animation:Fade':'Fade',
+'animation:Glide 1':'Glide 1',
+'animation:Glide 2':'Glide 2',
+'animation:Horizontal Folds':'Horizontal Folds',
+'animation:Magic Lamp':'Magic Lamp',
+'animation:Sidekick':'Sidekick',
+'animation:Vacuum':'Vacuum',
+'animation:Wave':'Wave',
+'animationaddon:Zoom':'Zoom',
+'animationaddon:Airplane':'Airplane',
+'animationaddon:Beam Up':'Beam Up',
+'animationaddon:Burn':'Burn',
+'animationaddon:Domino':'Domino',
+'animationaddon:Explode':'Explode',
+'animationaddon:Fold':'Fold',
+'animationaddon:Glide 3':'Glide 3',
+'animationaddon:Leaf Spread':'Leaf Spread',
+'animationaddon:Razr':'Razr',
+'animationaddon:Skewer':'Skewer'
+}
+
+MinimizeEffectNames = {\
+'animation:None':'None',
+'animation:Random':'Random',
+'animation:Curved Fold':'Curved Fold',
+'animation:Dream':'Dream',
+'animation:Fade':'Fade',
+'animation:Glide 1':'Glide 1',
+'animation:Glide 2':'Glide 2',
+'animation:Horizontal Folds':'Horizontal Folds',
+'animation:Magic Lamp':'Magic Lamp',
+'animation:Sidekick':'Sidekick',
+'animation:Zoom':'Zoom',
+'animationaddon:Airplane':'Airplane',
+'animationaddon:Beam Up':'Beam Up',
+'animationaddon:Burn':'Burn',
+'animationaddon:Domino':'Domino',
+'animationaddon:Explode':'Explode',
+'animationaddon:Fold':'Fold',
+'animationaddon:Glide 3':'Glide 3',
+'animationaddon:Leaf Spread':'Leaf Spread',
+'animationaddon:Razr':'Razr',
+'animationaddon:Skewer':'Skewer'
+}
+
+FocusEffectNames = {\
+'animation:None':'None',
+'animation:Dodge':'Dodge',
+'animation:Fade':'Fade',
+'animation:Wave':'Wave'
+}
+
+# 0 to 5 stars
+AnimationRatings = {\
+'None': 0,
+'Random': 5,
+'Airplane': 5,
+'Beam Up': 4,
+'Burn': 4,
+'Curved Fold': 2,
+'Domino': 3,
+'Dream': 4,
+'Explode': 4,
+'Fade': 1,
+'Fold': 2,
+'Glide 1': 2,
+'Glide 2': 2,
+'Glide 3': 2,
+'Horizontal Folds': 2,
+'Leaf Spread': 4,
+'Magic Lamp': 5,
+'Razr': 4,
+'Sidekick': 3,
+'Skewer': 3,
+'Vacuum': 5,
+'Wave': 4,
+'Zoom': 2,
+'Dodge': 5
+}
+
+gtk.glade.bindtextdomain("simple-ccsm", "/usr/local/share/locale")
+gettext.bindtextdomain("simple-ccsm", "/usr/local/share/locale")
+gettext.textdomain("simple-ccsm")
+
+Profiles = {\
+_("Minimal"): 'Minimal',
+_("Medium"): 'Medium',
+_("Advanced"): 'Advanced',
+_("Ultimate"): 'Ultimate'
+}
+
+Descriptions = {\
+'Minimal': _("Provides a simple desktop environment with very few effects."),
+'Medium': _("Provides good balance between attractiveness and moderate performence requirements."),
+'Advanced': _("Provides more aesthetically pleasing set of effects."),
+'Ultimate': _("Provides very advanced and eye-catching set of effects. Requires faster graphics card.")
+}
+
+# 0 to 5 stars
+EffectPluginRatings = {\
+'wobbly': 5,
+'cube': 3,
+'wall': 1,
+'expo': 4,
+'blur': 5,
+'mblur': 5,
+'3d': 5,
+'water': 5,
+'firepaint': 4,
+'shift': 5,
+'scale': 2,
+'cubeaddon': 5
+}
+
+Pages = {
+'profile': 0,
+'animations': 1,
+'desktop': 2,
+'accessibility': 3
+}
+
+AnimationSettings = {
+'openAnimationBox': "open_effects",
+'closeAnimationBox': "close_effects",
+'minimizeAnimationBox': "minimize_effects",
+'focusAnimationBox': "focus_effects"
+}
+
+Tooltips = gtk.Tooltips()
+CompizName = "compiz"
+
+# Change to your default
+CompizEnableDesktopEffects = False
+CompizStartCommand = "compiz-manager --replace"
+CompizDryRunCommand = "CM_DRY=yes compiz-manager"
+CompizNoChecksCommand = "SKIP_CHECKS=yes compiz-manager --replace"
+GnomeSession = "GNOME_DESKTOP_SESSION_ID"
+KdeSession = "KDE_FULL_SESSION"
+
+# Utility Functions
+def GetXdgConfigHome(subdir):
+    if 'XDG_CONFIG_HOME' in os.environ and os.environ['XDG_CONFIG_HOME']:
+        xdg = os.path.expanduser(os.environ['XDG_CONFIG_HOME'])
+    else:
+        xdg = os.path.expanduser('~/.config')
+
+    if subdir:
+        ret = os.path.join(xdg, subdir)
+    else:
+        ret = xdg
+
+    # create the directory if it's not there
+    try:
+        os.makedirs(ret, 0700)
+    except Exception:
+        pass
+
+    return ret
+
+def EnablePlugin(plugin, active):
+    # attempt to resolve conflicts...
+    conflicts = (plugin.Enabled and plugin.DisableConflicts) or plugin.EnableConflicts
+    conflict = ccm.PluginConflict(plugin, conflicts, autoResolve=True)
+    if conflict.Resolve():
+        plugin.Enabled = active
+    else:
+        return False
+
+    plugin.Context.Write()
+
+    return True
+
+def SetupBoxModel(box):
+    if not box.get_model():
+        store = gtk.ListStore(gobject.TYPE_STRING)
+        box.set_model(store)
+        cell = gtk.CellRendererText()
+        box.pack_start(cell, True)
+        box.add_attribute(cell, 'text', 0)
+    else:
+        box.get_model().clear()
+
+class DesktopPreview(gtk.Widget):
+    def __init__(self, size=(0,0)):
+        gtk.Widget.__init__(self)
+
+        self.size = size
+        self.default_desktop_height = 30
+        self.default_desktop_width = 40
+        self.desktop_height = 30
+        self.desktop_width = 40
+        self.desktop_space = 5
+        self.line_width = 1.0
+
+        self.set_flags(self.flags() | gtk.NO_WINDOW)
+
+    def set_value(self, size):
+        self.size = size
+        self.queue_resize()
+
+    def get_value(self):
+        return self.size
+    
+    def do_unrealize(self):
+        self.window.destroy()
+
+    def do_size_request(self, req):
+        req.width = (self.default_desktop_width+self.desktop_space)*4
+        req.height = (self.default_desktop_height+self.desktop_space)*2
+
+    def do_size_allocate(self, allocation):
+        self.allocation = allocation
+
+        width = self.allocation.width
+        height = self.allocation.height
+        self.desktop_width = (width / self.size[0]) - self.desktop_space
+        self.desktop_height = (self.desktop_width * 3.0) / 4.0
+        factor = ((height / self.size[1]) - self.desktop_space) / self.desktop_height
+        #factor = height / ((self.desktop_height + self.desktop_space) * self.size[1])
+
+        if factor < 1.0:
+            self.desktop_width = int(int(self.desktop_width) * factor)
+            self.desktop_height = int(int(self.desktop_height) * factor)
+        
+    def do_expose_event(self, event):
+        cr = self.window.cairo_create()
+        
+        fg = self.style.bg[gtk.STATE_SELECTED]
+        dark = self.style.fg[gtk.STATE_NORMAL]
+
+        x = self.allocation.x + self.line_width / 2.0
+        y = self.allocation.y + self.line_width / 2.0
+        for i in range(self.size[1]):
+            for j in range(self.size[0]):
+                cr.set_source_rgb(fg.red/65535.0,
+                              fg.green/65535.0,
+                              fg.blue/65535.0)
+
+                cr.rectangle(x, y, self.desktop_width, self.desktop_height)
+                cr.fill_preserve()
+                
+                cr.set_line_width(self.line_width)
+                cr.set_source_rgb(dark.red/65535.0,
+                              dark.green/65535.0,
+                              dark.blue/65535.0)
+                cr.stroke()
+
+                x += self.desktop_width + self.desktop_space
+
+            y += self.desktop_height + self.desktop_space 
+            x = self.allocation.x + self.line_width / 2.0
+
+class StarScale(gtk.Widget):
+    def __init__(self, stars=0.0, max=5):
+        gtk.Widget.__init__(self)
+
+        self.stars = stars
+        self.max = max
+        self.star_size = 16
+        self.star_space = 5
+
+        self.image_star = cairo.ImageSurface.create_from_png("%s/images/star.png" % DataDir)
+        self.image_dark = cairo.ImageSurface.create_from_png("%s/images/star_dark.png" % DataDir)
+        self.surface_star = None
+        self.surface_dark = None
+        self.surface      = None
+
+        self._size_changed = False
+        
+        self.set_flags(self.flags() | gtk.NO_WINDOW)
+
+    def set_value(self, stars):
+        self.stars = stars
+        if self.surface:
+            self.draw_surface()
+
+    def set_max(self, max):
+        self.max = max
+        self.queue_resize()
+
+    def get_value(self):
+        return self.stars
+    
+    def get_max(self):
+        return self.max
+
+    def do_size_request(self, req):
+        req.height = self.star_size
+        req.width = (self.star_size+self.star_space)*self.max
+        self._size_changed = True
+
+    def draw_sources(self):
+        width = self.allocation.width
+        height = self.allocation.height
+        self.surface_star = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        self.surface_dark = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+
+        data = ((self.surface_star, self.image_star), (self.surface_dark, self.image_dark))
+
+        for target, source in data:
+            cr = cairo.Context(target)
+            x = 0
+            for i in range(self.max):
+                cr.set_source_surface(source, x, 0)
+                cr.rectangle(x, 0, self.star_size, self.star_size)
+                cr.fill()
+                x += self.star_size + self.star_space
+
+    def draw_surface(self):
+        if not self.surface_dark or not self.surface_star or self._size_changed:
+            self.draw_sources()
+            self._size_changed = False
+
+        width = self.allocation.width
+        height = self.allocation.height
+        self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        cr = cairo.Context(self.surface)
+
+        width = (self.star_size+self.star_space)*self.max
+
+        q = (self.max - self.stars) / self.max
+        cr.set_source_surface(self.surface_dark)
+        cr.rectangle(width - q*width, 0, q*width, self.star_size)
+        cr.fill()
+
+        q = self.stars / self.max
+        cr.set_source_surface(self.surface_star)
+        cr.rectangle(0, 0, q*width, self.star_size)
+        cr.fill()
+
+    def do_expose_event(self, event):
+        if not self.surface or self._size_changed:
+            self.draw_surface()
+
+        x = self.allocation.x
+        y = self.allocation.y
+        width  = self.allocation.width
+        height = self.allocation.height
+
+        cr = self.window.cairo_create()
+        cr.set_source_surface(self.surface, x, y)
+        cr.rectangle(x, y, width, height)
+        cr.fill()
+
+
+gobject.type_register(StarScale)
+gobject.type_register(DesktopPreview)
+
+class CheckImage(gtk.HBox):
+    def __init__(self, text="", value=False):
+        gtk.HBox.__init__(self)
+        self.image = gtk.Image()
+        self.label = gtk.Label(text)
+        self.set_spacing(5)
+
+        self.pack_start(self.image, False, False)
+        self.pack_start(self.label, False, False)
+
+        self.value = value
+
+        self.image.props.xalign = 0.0
+        self.label.props.xalign = 0.0
+
+        self.update()
+    
+    def set_value(self, value):
+        self.value = value
+
+        self.update()
+
+    def get_value(self):
+        return self.value
+    
+    def update(self):
+        size = gtk.ICON_SIZE_BUTTON
+        if self.value:
+            self.image.set_from_stock(gtk.STOCK_APPLY, size)
+            Tooltips.set_tip(self, _("Enabled"))
+        else:
+            self.image.set_from_stock(gtk.STOCK_DIALOG_ERROR, size)
+            Tooltips.set_tip(self, _("Disabled"))
+
+class ProfilePage:
+    def __init__(self, context, gladeXML):
+        self.GladeXML = gladeXML
+        self.Context  = context
+        self.DesktopPlugins = {}
+
+        # Check List
+        self.EffectStars = StarScale()
+        self.AnimationStars = StarScale()
+        self.ZoomCheck = CheckImage(_("Zoom"))
+        self.ColorfilterCheck = CheckImage(_("Colorfilter"))
+        effectsAlign = self.GladeXML.get_widget("effectsAlignment")
+        effectsAlign.add(self.EffectStars)
+        animationAlign = self.GladeXML.get_widget("animationsAlignment")
+        animationAlign.add(self.AnimationStars)
+        accessibilityBox = self.GladeXML.get_widget("accessibilityBox")
+        accessibilityBox.pack_start(self.ZoomCheck, False, False)
+        accessibilityBox.pack_start(self.ColorfilterCheck, False, False)
+
+        # Desktop Label
+        self.DesktopLayout = "%s"
+        self.DesktopLabel = self.GladeXML.get_widget("desktopLabel")
+
+        self.GladeXML.signal_autoconnect(self)
+
+    def UpdateDesktopPlugins(self):
+        self.DesktopPlugins = {}
+        for plugin in self.Context.Plugins.values():
+            if "largedesktop" in plugin.Features:
+                self.DesktopPlugins[plugin.ShortDesc] = plugin
+    
+    def SetDesktopLabel(self, widget=None):
+        for shortDesc, plugin in self.DesktopPlugins.items():
+            if plugin.Enabled:
+                self.DesktopLabel.set_markup(self.DesktopLayout % shortDesc)
+                break
+
+    def SetDescriptionLabel(self):
+        label = self.GladeXML.get_widget("descriptionLabel")
+        name = self.Context.CurrentProfile.Name
+
+        description = _("None")
+        if name in Descriptions:
+            description = Descriptions[name]
+
+        label.set_text(description)
+
+    def SetEffectRating(self, widget=None):
+        rating = 0.0
+
+        for pluginName, stars in EffectPluginRatings.items():
+            if not pluginName in self.Context.Plugins:
+                continue
+            plugin = self.Context.Plugins[pluginName]
+            if plugin.Enabled:
+                rating += stars
+
+        rating = rating / float(len(EffectPluginRatings) - 1)
+
+        self.EffectStars.set_value(rating)
+
+    def SetAnimationRating(self, widget=None):
+        if 'animation' not in self.Context.Plugins:
+            return
+
+        names = {
+            'close_effects': CloseOpenEffectNames,
+            'open_effects': CloseOpenEffectNames,
+            'minimize_effects': MinimizeEffectNames,
+            'focus_effects': FocusEffectNames
+        }
+        plugin = self.Context.Plugins['animation']
+
+        rating = 0.0
+        for box, settingName in AnimationSettings.items():
+            box = self.GladeXML.get_widget(box)
+            if not box.get_model():
+                continue
+            text = box.get_active_text()
+            setting = plugin.Screen[settingName]
+            if len(setting.Value) >= 1:
+                value = setting.Value[0]
+                if names[settingName].has_key(value):
+                    name = names[settingName][value]
+                    rating += AnimationRatings[name]
+                else:
+                    rating += 5 # Assume "medium" rating for unknown animations
+
+        if not plugin.Enabled:
+            rating = 0.0
+
+        rating = rating / len(AnimationSettings)
+
+        self.AnimationStars.set_value(rating)
+
+    def CheckAccessibility(self, widget=None):
+        enabled = False
+        for name in ('ezoom', 'zoom', 'mag'):
+            plugin = self.Context.Plugins[name]
+            if plugin.Enabled:
+                enabled = True
+                break
+        self.ZoomCheck.set_value(enabled)
+
+        enabled = False
+        if 'colorfilter' in self.Context.Plugins:
+            enabled = self.Context.Plugins['colorfilter'].Enabled
+        self.ColorfilterCheck.set_value(enabled)
+
+    def Update(self):
+        self.UpdateDesktopPlugins()
+        self.SetDesktopLabel()
+        self.SetDescriptionLabel()
+        self.SetEffectRating()
+        self.SetAnimationRating()
+        self.CheckAccessibility()
+
+class AnimationPage:
+    def __init__(self, context, gladeXML):
+        self.GladeXML = gladeXML
+        self.Context  = context
+        self.Block    = 0
+        self.AnimExtensionPlugins = []
+
+        self.GladeXML.signal_autoconnect(self)
+
+        if 'animation' not in self.Context.Plugins:
+            # Disable animations CheckButton
+            widget = self.GladeXML.get_widget("enableAnimations")
+            widget.set_sensitive(False)
+            Tooltips.set_tip(widget, _(("Can't find the animation plugin.")))
+
+            # Disable extra animations CheckButton
+            widget = self.GladeXML.get_widget("enableExtraAnim")
+            widget.set_sensitive(False)
+            return
+
+        context.Plugins['animation'].Update()
+
+        # Get a list of plugins that extend the animation plugin
+        for (name, plugin) in self.Context.Plugins.items():
+            # Assume the name of extension plugins will start with 'animation'
+            if name == 'animation' or name[:9] != 'animation':
+                continue
+            for basePlugin in plugin.GetExtensionBasePlugins():
+                if basePlugin.Name == 'animation':
+                    self.AnimExtensionPlugins.append(plugin)
+                    context.Plugins[name].Update()
+
+        if len(self.AnimExtensionPlugins) == 0:
+            # Disable extra animations CheckButton
+            widget = self.GladeXML.get_widget("enableExtraAnim")
+            widget.set_sensitive(False)
+            Tooltips.set_tip(widget, _(("Can't find any animation extension plugins.")))
+
+    def EnableAnimationsChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        active = widget.get_active()
+        plugin = self.Context.Plugins['animation']
+        EnablePlugin(plugin, active)
+        for prefix in ("open", "close", "minimize", "focus"):
+            name = prefix + "AnimationBox"
+            widget = self.GladeXML.get_widget(name)
+            widget.set_sensitive(active)
+        widget = self.GladeXML.get_widget('enableExtraAnim')
+        widget.set_sensitive(active)
+        if active:
+            if widget.get_active():
+                # If enableExtraAnim is checked, enable the extension plugins
+                self.EnableExtraAnimationsChanged(widget)
+            else:
+                # Otherwise, just fill boxes with the base animation effects
+                self.Context.UpdateExtensiblePlugins()
+                self.FillAnimationBoxes()
+    
+    def EnableExtraAnimationsChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        # Enable/disable all extension plugins, considering dependencies
+        pluginsToChange = list(self.AnimExtensionPlugins)
+        while len(pluginsToChange) > 0:
+            lastPluginsToActivate = list(pluginsToChange)
+            pluginList = list(pluginsToChange)
+            for plugin in pluginList:
+                if plugin.Enabled != widget.get_active() and \
+                    EnablePlugin(plugin, widget.get_active()):
+                    pluginsToChange.remove(plugin)
+            if pluginsToChange == lastPluginsToActivate:
+                break  # no progress this iteration, so stop
+
+        self.Context.UpdateExtensiblePlugins()
+        self.FillAnimationBoxes()
+
+    def AnimationBoxChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        name = widget.get_name()
+        settingName = AnimationSettings[name]
+
+        text = widget.get_active_text()
+        plugin = self.Context.Plugins['animation']
+        setting = plugin.Screen[settingName]
+        value = setting.Value
+        if len(value) >= 1:
+            if text:  # Handle "chosen animation is in an extension plugin" case
+                value[0] = setting.Info[1][0][text]
+                setting.Value = value
+                self.Context.Write()
+        else:
+            for setting in plugin.Groups[setting.Group][setting.SubGroup].Screen.values():
+                setting.Reset()
+            self.Context.Write()
+            self.AnimationBoxChanged(widget, settingName)
+
+    def SetEnableAnimations(self):
+        widget = self.GladeXML.get_widget("enableAnimations")
+        active = False
+        if 'animation' in self.Context.Plugins:
+            plugin = self.Context.Plugins['animation']
+            active = plugin.Enabled
+
+        widget.set_active(active)
+
+        # If at least one animation extension plugin is active,
+        # make the enableExtraAnimations widget active
+        widget = self.GladeXML.get_widget("enableExtraAnim")
+        atLeastOneActive = False
+        for plugin in self.AnimExtensionPlugins:
+            if plugin.Enabled:
+                atLeastOneActive = True
+                break
+        widget.set_active(atLeastOneActive)
+
+        for prefix in ("open", "close", "minimize", "focus"):
+            name = prefix + "AnimationBox"
+            widget = self.GladeXML.get_widget(name)
+            widget.set_sensitive(active)
+    
+    def FillAnimationBoxes(self):
+        if 'animation' not in self.Context.Plugins:
+            return
+
+        plugin = self.Context.Plugins['animation']
+        
+        for boxName, settingName in AnimationSettings.items():
+            box = self.GladeXML.get_widget(boxName)
+            setting = plugin.Screen[settingName]
+            info = setting.Info[1]
+            itemsByValue = info[1]
+            items = info[2]
+            SetupBoxModel(box)
+            for key, value in items:
+                box.append_text(key)
+            if len(setting.Value) >= 1:
+                value = setting.Value[0]
+                if itemsByValue.has_key(value):
+                    box.set_active(itemsByValue[value][1])
+            else:
+                box.set_active(0)
+
+    def Update(self):
+        self.Block += 1
+        self.SetEnableAnimations()
+        self.FillAnimationBoxes()
+        self.Block -= 1
+
+class EffectPage:
+    def __init__(self, context, gladeXML):
+        self.GladeXML = gladeXML
+        self.Context  = context
+        self.Block    = 0
+
+        self.GladeXML.signal_autoconnect(self)
+
+    def UpdateSwitcherPlugins(self):
+        self.SwitcherPlugins = {}
+        self.SwitcherKeySettings = {}
+        self.ReverseSwitcherKeySettings = {}
+        for pluginName in ('switcher', 'shift', 'ring', 'staticswitcher', 'stackswitch'):
+            if pluginName in self.Context.Plugins:
+                plugin = self.Context.Plugins[pluginName]
+
+                if pluginName == 'shift':
+                    self.SwitcherPlugins[_("%s (Cover)") % plugin.ShortDesc] = plugin
+                    self.SwitcherPlugins[_("%s (Flip)") % plugin.ShortDesc] = plugin
+                else:
+                    self.SwitcherPlugins[plugin.ShortDesc] = plugin
+
+                setting = plugin.Screen['next_key']
+                self.SwitcherKeySettings[pluginName] = setting
+                setting = plugin.Screen['prev_key']
+                self.ReverseSwitcherKeySettings[pluginName] = setting
+
+
+    def EffectPluginChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        name = widget.get_name()
+        effectPlugins = {
+        'enableScale': "scale",
+        'enableWobbly': "wobbly",
+        'enableBlur': "blur",
+        'enableExpo': "expo",
+        'enable3D': "3d"
+        }
+        pluginName = effectPlugins[name]
+
+        plugin = self.Context.Plugins[pluginName]
+        value  = widget.get_active()
+
+        EnablePlugin(plugin, value)
+ 
+    def SwitcherBoxChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        text = widget.get_active_text()
+
+        for shortDesc, plugin in self.SwitcherPlugins.items():
+            if text != shortDesc:
+                EnablePlugin(plugin, False)
+                setting = self.SwitcherKeySettings[plugin.Name]
+                if not setting.IsDefault and setting.DefaultValue != SwitcherKey:
+                    setting.Reset()
+                setting = self.ReverseSwitcherKeySettings[plugin.Name]
+                if not setting.IsDefault and setting.DefaultValue != ReverseSwitcherKey:
+                    setting.Reset()
+
+        self.Context.Write()
+
+        if not text in self.SwitcherPlugins:
+            return
+
+        plugin = self.SwitcherPlugins[text]
+        EnablePlugin(plugin, True)
+
+        # Set default key binding to Alt-Tab
+        setting = self.SwitcherKeySettings[plugin.Name]
+        settings = self.SwitcherKeySettings.values()
+        conflict = ccm.KeyConflict(setting, SwitcherKey, settings=settings, autoResolve=True)
+        if conflict.Resolve(ccm.GlobalUpdater):
+            setting.Value = SwitcherKey
+
+            setting = self.ReverseSwitcherKeySettings[plugin.Name]
+            settings = self.ReverseSwitcherKeySettings.values()
+            conflict = ccm.KeyConflict(setting, SwitcherKey, settings=settings, autoResolve=True)
+            if conflict.Resolve(ccm.GlobalUpdater):
+                setting.Value = ReverseSwitcherKey
+
+            # Exception for shift, since it has 2 modes
+            if plugin.Name == 'shift':
+                setting = plugin.Screen['mode']
+
+                if text.find(_("Cover")) != -1:
+                    setting.Value = 0
+                elif text.find(_("Flip")) != -1:
+                    setting.Value = 1
+
+        self.Context.Write()
+
+    def DeformationBoxChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        text = widget.get_active_text()
+        plugin = self.Context.Plugins['cubeaddon']
+        setting = plugin.Screen['deformation']
+        value = setting.Info[2][text]
+        if value != 0 and not plugin.Enabled:
+            EnablePlugin(plugin, True)
+        setting.Value = value
+
+        self.Context.Write()
+
+    def OpacityChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        value = widget.get_value()
+        plugin = self.Context.Plugins['cube']
+        # Only change cube opacity on rotate
+        setting = plugin.Screen['active_opacity']
+        setting.Value = float(value)
+
+        self.Context.Write()
+
+    def EnableReflectionChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        value = widget.get_active()
+        plugin = self.Context.Plugins['cubeaddon']
+        setting = plugin.Screen['reflection']
+        setting.Value = value
+
+        self.Context.Write()
+
+    def SetEffectPlugins(self):
+        widgets = {
+        'scale': "enableScale",
+        'wobbly': "enableWobbly",
+        'blur': "enableBlur",
+        'expo': "enableExpo",
+        '3d': "enable3D"
+        }
+
+        for pluginName, widgetName in widgets.items():
+            widget = self.GladeXML.get_widget(widgetName)
+            active = False
+            sensitive = False
+            if pluginName in self.Context.Plugins:
+                plugin = self.Context.Plugins[pluginName]
+                active = plugin.Enabled
+                sensitive = True
+            widget.set_sensitive(sensitive)
+            widget.set_active(active)
+
+    def SetCubeEffects(self, widget=None):
+        alignment = self.GladeXML.get_widget("cubeEffectsAlignment")
+        sensitive = False
+        if 'cube' in self.Context.Plugins:
+            plugin = self.Context.Plugins['cube']
+            sensitive = plugin.Enabled
+        alignment.set_sensitive(sensitive)
+
+    def SetOpacity(self):
+        widget = self.GladeXML.get_widget("cubeOpacity")
+
+        if not 'cube' in self.Context.Plugins:
+            return
+
+        plugin = self.Context.Plugins['cube']
+        setting = plugin.Screen['active_opacity']
+        value = setting.Value
+        widget.set_value(int(value))
+
+    def SetReflection(self):
+        widget = self.GladeXML.get_widget("enableReflection")
+
+        if not 'cubeaddon' in self.Context.Plugins:
+            return
+
+        plugin = self.Context.Plugins['cubeaddon']
+        setting = plugin.Screen['reflection']
+        value = setting.Value
+        widget.set_active(value)
+
+    def FillSwitcherBox(self):
+        box = self.GladeXML.get_widget("switcherPluginChooser")
+        SetupBoxModel(box)
+        box.append_text(_("None"))
+        box.set_active(0)
+
+        i = 1
+        for shortDesc, plugin in self.SwitcherPlugins.items():
+            box.append_text(shortDesc)
+            if plugin.Enabled:
+                if plugin.Name == 'shift':
+                    modes = [_("Cover"), _("Flip")]
+                    setting = plugin.Screen['mode']
+                    mode = modes[setting.Value]
+                    if mode in shortDesc:
+                        box.set_active(i)
+                else:
+                    box.set_active(i)
+            i += 1
+
+    def FillDeformationBox(self):
+        box = self.GladeXML.get_widget("deformationChooser")
+        SetupBoxModel(box)
+
+        if not 'cubeaddon' in self.Context.Plugins:
+            box.set_sensitive(False)
+            return
+
+        plugin = self.Context.Plugins['cubeaddon']
+        setting = plugin.Screen['deformation']
+
+        items = sorted(setting.Info[2].items(), key=ccm.EnumSettingKeyFunc)
+        for key, value in items:
+            box.append_text(key)
+        box.set_active(setting.Value)
+
+    def Update(self):
+        self.Block += 1
+        self.SetEffectPlugins()
+        self.SetCubeEffects()
+        self.SetOpacity()
+        self.SetReflection()
+        self.UpdateSwitcherPlugins()
+        self.FillSwitcherBox()
+        self.FillDeformationBox()
+        self.Block -= 1
+
+class DesktopPage:
+    def __init__(self, context, gladeXML):
+        self.GladeXML = gladeXML
+        self.Context  = context
+        self.Block    = 0
+
+        self.GladeXML.signal_autoconnect(self)
+
+        # Preview Widget
+        self.DesktopPreview = DesktopPreview()
+        previewAlign = self.GladeXML.get_widget("previewAlignment")
+        previewAlign.add(self.DesktopPreview)
+
+    def UpdateDesktopPlugins(self):
+        self.DesktopPlugins = {}
+        for plugin in self.Context.Plugins.values():
+            if "largedesktop" in plugin.Features:
+                self.DesktopPlugins[plugin.ShortDesc] = plugin
+    
+    def DesktopSizeChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        name = widget.get_name()
+        settings = {
+        'horizontalDesktops': "hsize",
+        'verticalDesktops': "vsize"
+        }
+        settingName = settings[name]
+
+        value = widget.get_value()
+        self.Context.Plugins['core'].Screen[settingName].Value = value
+        self.Context.Write()
+        self.SetDesktopPreview()
+
+    def AppearenceBoxChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        text = widget.get_active_text()
+
+        for shortDesc, plugin in self.DesktopPlugins.items():
+            if text != shortDesc:
+                EnablePlugin(plugin, False)
+
+        self.Context.Write()
+
+        for shortDesc, plugin in self.DesktopPlugins.items():
+            if text == shortDesc:
+                plugin.Enabled = True
+                # exception for cube, since it requires rotate
+                if plugin.Name == 'cube':
+                    setting = self.Context.Plugins['core'].Screen['vsize']
+                    setting.Value = 1 # Cube can only use 1 vertical viewport
+                    EnablePlugin(self.Context.Plugins['rotate'], True)
+                    EnablePlugin(self.Context.Plugins['cubeaddon'], True)
+
+        self.Context.Write()
+        self.SetDesktopSize()
+
+    def SetDesktopPreview(self):
+        hsize = self.Context.Plugins['core'].Screen["hsize"].Value
+        vsize = self.Context.Plugins['core'].Screen["vsize"].Value
+        self.DesktopPreview.set_value((hsize, vsize))
+
+    def SetDesktopSize(self):
+        scales = {"horizontalDesktops" : "hsize",
+                  "verticalDesktops"   : "vsize"}
+
+        for widgetName, settingName in scales.items():
+            widget = self.GladeXML.get_widget(widgetName)
+            setting = self.Context.Plugins['core'].Screen[settingName]
+            widget.set_value(setting.Value)
+
+    def FillAppearenceBox(self):
+        box = self.GladeXML.get_widget("desktopPluginChooser")
+        SetupBoxModel(box)
+
+        i = 0
+        for shortDesc, plugin in self.DesktopPlugins.items():
+            box.append_text(shortDesc)
+            if plugin.Enabled:
+                box.set_active(i)
+            i += 1
+
+    def Update(self):
+        self.Block += 1
+        self.SetDesktopPreview()
+        self.SetDesktopSize()
+        self.UpdateDesktopPlugins()
+        self.FillAppearenceBox()
+        self.Block -= 1
+
+class ZoomPage:
+    def __init__(self, context, gladeXML):
+        self.GladeXML = gladeXML
+        self.Context  = context
+        self.Block    = 0
+
+        self.GladeXML.signal_autoconnect(self)
+
+        # Zoom Keybindings
+        self.Widgets = {}
+        self.Settings = {
+        # identifier  -   plugin   -    setting     -      container
+        'screenZoomIn':  ('ezoom', 'zoom_in_button',  'screenZoomBox'),
+        'screenZoomOut': ('ezoom', 'zoom_out_button', 'screenZoomBox'),
+        'areaZoomIn':    ('mag',   'zoom_in_button',  'areaZoomBox'),
+        'areaZoomOut':   ('mag',   'zoom_out_button', 'areaZoomBox')
+        }
+
+    def ZoomChanged(self, widget):
+        if self.Block > 0:
+            return
+        
+        available = {}
+        for name in ('ezoom', 'mag'):
+            if name in self.Context.Plugins:
+                plugin = self.Context.Plugins[name]
+                available[name] = plugin
+        
+        widget = self.GladeXML.get_widget("enableZoom")
+        if 'ezoom' in available:
+            available['ezoom'].Enabled = widget.get_active()
+        elif 'zoom' in available:
+            available['ezoom'].Enabled = widget.get_active()
+
+        widget = self.GladeXML.get_widget("enableMag")
+        if 'mag' in available:
+            available['mag'].Enabled = widget.get_active()
+
+        self.Context.Write()
+        for identifier, data in self.Settings.items():
+            pluginName, settingName, containerName = data
+
+            if pluginName not in self.Context.Plugins:
+                continue
+
+            plugin    = self.Context.Plugins[pluginName]
+            container = self.GladeXML.get_widget(containerName)
+            container.set_sensitive(plugin.Enabled)
+    
+    def SetZoom(self):
+        for identifier, data in self.Settings.items():
+            pluginName, settingName, containerName = data
+
+            if pluginName not in self.Context.Plugins:
+                continue
+
+            if identifier not in self.Widgets:
+                plugin    = self.Context.Plugins[pluginName]
+                setting   = plugin.Screen[settingName]
+                widget    = ccm.MakeSetting(setting)
+                container = self.GladeXML.get_widget(containerName)
+                container.pack_start(widget.EBox)
+                if not plugin.Enabled:
+                    container.set_sensitive(False)
+                self.Widgets[identifier] = widget
+
+            self.Widgets[identifier].Read()
+
+        available = {}
+        for name in ('ezoom', 'zoom', 'mag'):
+            if name in self.Context.Plugins:
+                plugin = self.Context.Plugins[name]
+                available[name] = plugin
+
+        widget = self.GladeXML.get_widget("enableZoom")
+        widget.set_sensitive(True)
+        if 'ezoom' in available:
+            plugin = available['ezoom']
+            widget.set_active(plugin.Enabled)
+        elif 'zoom' in available:
+            plugin = available['zoom']
+            widget.set_active(plugin.Enabled)
+        else:
+            widget.set_sensitive(False)
+            widget.set_active(False)
+
+        widget = self.GladeXML.get_widget("enableMag")
+        widget.set_sensitive(True)
+        if 'mag' in available:
+            plugin = available['mag']
+            widget.set_active(plugin.Enabled)
+        else:
+            widget.set_sensitive(False)
+            widget.set_active(False)
+
+    def Update(self):
+        self.Block += 1
+        self.SetZoom()
+        self.Block -= 1
+
+class EdgePage:
+    def __init__(self, context, gladeXML):
+        self.GladeXML = gladeXML
+        self.Context  = context
+        self.Block    = 0
+
+        align = self.GladeXML.get_widget("edgesAlignment")
+        self.EdgeSelector = ccm.GlobalEdgeSelector(self.Context)
+        align.add(self.EdgeSelector)
+
+    def Update(self):
+        pass
+
+class PagesThread(Thread):
+    def __init__(self, mainWin):
+        self.mainWin = mainWin
+        Thread.__init__(self)
+
+    def InitPages(self):
+        mainWin = self.mainWin
+
+        # Wait until main window is shown
+        while not mainWin.DoneUpdate:
+            time.sleep(0.1)
+
+        mainWin.EffectPage = EffectPage(mainWin.Context, mainWin.GladeXML)
+        mainWin.EffectPage.Update()
+        mainWin.Window.show_all()
+
+        mainWin.EdgePage = EdgePage(mainWin.Context, mainWin.GladeXML)
+        mainWin.EdgePage.Update()
+        mainWin.Window.show_all()
+
+    def run(self):
+        self.InitPages()
+
+    def Quit (self):
+        gtk.main_quit()
+
+class MainWin:
+    def __init__(self, context, page = -1):
+        self.GladeXML = glade.XML(DataDir + "simple-ccsm.glade", domain="simple-ccsm")
+        self.GladeXML.signal_autoconnect(self)
+
+        self.Context = context
+        self.Block = 0
+
+        if page != -1 and page in Pages:
+            notebook = self.GladeXML.get_widget("notebook")
+            notebook.set_current_page (Pages[page])
+
+        # Window
+        self.Window = self.GladeXML.get_widget("mainWin")
+
+        # Enable effects button
+        self.EnableEffectsButton = self.GladeXML.get_widget("enableEffects")
+        self.EnableEffectsButton.connect ("toggled", self.EnableDesktopEffectsChanged)
+        self.Notebook = self.GladeXML.get_widget("notebook")
+        if not CompizEnableDesktopEffects:
+            self.EnableEffectsButton.hide_all()
+            self.EnableEffectsButton.set_no_show_all(True)
+
+        # Profile Chooser
+        self.ProfileChooser = self.GladeXML.get_widget("profileChooser")
+
+        # Pages
+        self.AnimationPage = AnimationPage(self.Context, self.GladeXML)
+        self.DesktopPage   = DesktopPage(self.Context, self.GladeXML)
+        self.ZoomPage      = ZoomPage(self.Context, self.GladeXML)
+        self.ProfilePage   = ProfilePage(self.Context, self.GladeXML)
+        self.EffectPage    = None
+        self.EdgePage      = None
+
+        self.DoneUpdate = False
+        PagesThread(self).start()
+
+        self.Update()
+        self.Window.show_all()
+        self.DoneUpdate = True
+
+        gobject.timeout_add(1000, self.EnableIntegration)
+
+    def EnableIntegration(self):
+        if GnomeSession in os.environ and os.environ[GnomeSession]:
+            if not self.Context.Integration:
+                self.Context.Integration = True
+
+            compat = self.Context.Plugins["gnomecompat"]
+            if not compat.Enabled:
+                EnablePlugin(compat, True)
+        elif KdeSession in os.environ and os.environ[KdeSession]:
+            if not self.Context.Integration:
+                self.Context.Integration = True
+
+        self.Context.Write()
+
+
+    def CheckForCompiz(self):
+        composited = self.Window.is_composited()
+        if composited:
+            # Now do the dirty work - check if it is really Compiz
+            psCMD = "ps -e".split(" ")
+            ps = subprocess.Popen(psCMD, stdout=subprocess.PIPE)
+            grepCMD = "grep compiz".split(" ")
+            grep = subprocess.Popen(grepCMD, stdin=ps.stdout, stdout=subprocess.PIPE)
+            grep.wait()
+            lines = grep.stdout.readlines()
+            for l in lines:
+                name = l.replace("\n", "").split(" ")[-1]
+                if name == CompizName:
+                    return True
+
+        return False
+
+    def Update(self):
+        self.Context.Read()
+        self.Block += 1
+
+        self.AnimationPage.Update()
+        self.DesktopPage.Update()
+        if self.EffectPage:
+            self.EffectPage.Update()
+        self.ZoomPage.Update()
+        self.ProfilePage.Update()
+        if self.EdgePage:
+            self.EdgePage.Update()
+
+        self.SetProfile()
+        if CompizEnableDesktopEffects:
+            self.SetEnableDesktopEffects()
+
+        self.Block -= 1
+
+    def SetEnableDesktopEffects(self):
+        running = self.CheckForCompiz()
+        self.EnableEffectsButton.set_active(running)
+        self.Notebook.set_sensitive(running)
+        self.ProfileChooser.set_sensitive(running)
+
+    def EnableDesktopEffectsChanged(self, widget):
+        if self.Block > 0:
+            return
+
+        enabled = self.EnableEffectsButton.get_active()
+        if enabled:
+            # First try to check if compiz can be run
+            cmd = CompizDryRunCommand.split(" ")
+            proc = subprocess.Popen(cmd, shell=True)
+            proc.wait()
+            if proc.returncode != 0:
+                # Dry run detected problems, warn the user
+                dialog = gtk.Dialog ()
+                dialog.set_title("Error")
+                dialog.set_border_width(6)
+                label = gtk.Label(_("Desktop effects are not supported on your current hardware / configuration. Would you like to cancel enabling of desktop effects or run them anyway?"))
+                label.set_line_wrap(True)
+                dialog.vbox.pack_start(label,
+                                       gtk.TRUE,
+                                       gtk.FALSE,
+                                       3)
+                dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+                dialog.add_button("Run anyway", gtk.RESPONSE_OK)
+                dialog.show_all()
+                response = dialog.run()
+                dialog.destroy()
+                if response != gtk.RESPONSE_OK:
+                    self.EnableEffectsButton.set_active(False)
+                    return
+
+            # Make compiz manager skip further checks
+            path = os.path.expanduser("~/.config/compiz/compiz-manager")
+            hasSkip = False
+
+            try:
+                config = open(path, "r")
+                for l in config.readlines():
+                    if "SKIP_CHECKS" in l:
+                        hasSkip = True
+                        break
+                config.close()
+            except IOError, e:
+                print "No compiz manager config found!"
+                dir = os.path.expanduser("~/.config/compiz/")
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
+
+            if not hasSkip:
+                config = open(path, "a")
+                config.write("SKIP_CHECKS=yes")
+                config.close()
+
+            # Start compiz
+            cmd = CompizStartCommand.split(" ")
+            subprocess.Popen(cmd)
+
+            # Enable compiz in kde
+            try:
+                 subprocess.call('kwriteconfig --file ksmserverrc --group General --key windowManager compiz'.split())
+            except (IOError, OSError):
+                 pass
+
+            # Create a file that indicates wether compiz is enabled or not
+            xdg_compiz = GetXdgConfigHome('compiz')
+            path = os.path.join(xdg_compiz, 'enable-compiz')
+            open(path, "w+").close() # touch replacement
+
+            path = os.path.join(xdg_compiz, 'disable-compiz')
+            try:
+                os.remove(path)
+            except (IOError, OSError):
+                pass
+        else:
+            fallbackWM = ""
+            if GnomeSession in os.environ and os.environ[GnomeSession]:
+                fallbackWM = "metacity"
+            elif KdeSession in os.environ and os.environ[KdeSession]:
+                fallbackWM = "kwin"
+
+            if fallbackWM:
+                cmd = "%s --replace" % fallbackWM
+                cmd = cmd.split(" ")
+                subprocess.Popen(cmd)
+
+            # Reset window manager config for KDE
+            cmd = "kwriteconfig --file ksmserverrc --group General --key windowManager kwin".split(" ")
+            try:
+                subprocess.Popen(cmd)
+            except (IOError, OSError):
+                pass
+
+            # Create a file that indicates compiz is explicitly disabled, so should not be started
+            xdg_compiz = GetXdgConfigHome('compiz')
+            path = os.path.join(xdg_compiz, 'disable-compiz')
+            open(path, "w+").close() # touch replacement
+
+            # Remove old config
+            files = (os.path.join(xdg_compiz, 'enable-compiz'), os.path.join(xdg_compiz, 'compiz-manager'))
+            for file in files:
+                path = os.path.expanduser(file)
+                try:
+                    os.remove(path)
+                except (IOError, OSError):
+                    pass
+
+        self.Notebook.set_sensitive(enabled)
+        self.ProfileChooser.set_sensitive(enabled)
+
+
+    def ApplyProfile(self, widget):
+        profile = self.ProfileChooser.get_active_text()
+        self.Context.ResetProfile()
+        self.Context.Read()
+
+        if  profile != _("Default")\
+        and profile in Profiles:
+            profile = Profiles[profile]
+
+        profilePath = "%s/profiles/%s.profile" % (DataDir, profile)
+        self.Context.CurrentProfile = ccs.Profile(self.Context, profile)
+        self.Context.UpdateProfiles()
+        self.Context.Import(profilePath)
+        self.Context.Write()
+        self.Update()
+
+    def SetProfile(self):
+        SetupBoxModel(self.ProfileChooser)
+
+        self.Context.UpdateProfiles()
+
+        self.ProfileChooser.append_text(_("Default"))
+        profiles = sorted(Profiles.values())
+        for profile in profiles:
+            self.ProfileChooser.append_text(_(profile))
+
+        current = self.Context.CurrentProfile.Name or _("Default")
+        if current in profiles:
+            pos = profiles.index(current) + 1
+            self.ProfileChooser.set_active(pos)
+        elif current != _("Default"):
+            self.ProfileChooser.prepend_text(current)
+            self.ProfileChooser.set_active(0)
+        else:
+            self.ProfileChooser.set_active(0)
+
+    def Quit(self, widget):
+        gtk.main_quit()
+
+if __name__ == "__main__":
+    context = ccs.Context()
+    page = -1
+    parser = OptionParser()
+    parser.add_option("-p", "--page", dest = "page",
+		      help = "Directly jump to page PAGE", metavar = "PAGE")
+    (options, args) = parser.parse_args()
+    if options.page:
+        page = options.page
+    gtk.window_set_default_icon_name('simple-ccsm')
+    mainWin = MainWin(context, page)
+    gdk.threads_init()
+    gtk.main()
